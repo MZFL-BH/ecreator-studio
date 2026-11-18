@@ -28,7 +28,8 @@ description: >-
         "🎨 预渲染高清对比卡片 (render_cards.py: 批量输出 1080x1920 动效图)",
         "✂️ 智能切除口播气口 (silence.py: 苹果硬件加速秒切停顿倒吸气)",
         "📊 发后数据体检与复盘 (review.py: 赞播比/赞藏比/90天推荐池/P0诊断)",
-        "☁️ 单独同步飞书多维表格 (feishu_sync.py: 本地物料与云端总表同步)"
+        "🚀 多平台校验与草稿分发 (distribute.py: 封面比例校验 + video-publisher + 飞书核对明细)",
+        "☁️ 单独同步飞书多维表格 (feishu_sync.py: 本地物料与云端总表/核对子表同步)"
       ],
       "is_multi_select": false
     }
@@ -90,8 +91,15 @@ description: >-
 - 输出 🔴 P0 / 🟠 P1 / 🟡 P2 级别体检报告 `review.md`，给出下周周中改进动作。
 
 ### 6. ☁️ 单独同步飞书多维表格
-运行 `feishu_sync.py <工程目录>`：
-- 秒级同步本地工程状态、分镜完成度、核心痛点与产物清单至飞书多维表格「AI自媒体自动化·选题与出片总表」。
+运行 `feishu_sync.py <工程目录> [--sync-platforms]`：
+- 秒级同步本地工程状态、分镜完成度、核心痛点与产物清单至飞书多维表格「AI自媒体自动化·选题与出片总表」；
+- 带 `--sync-platforms` 时，自动读取 `preflight_report.json` 或 `~/.video-publisher/v2-jobs/*/state.json`，把各平台实际标题、定时时间、封面与卡点明细写入「分平台分发与数据明细」子表。
+- 跨账号复用：支持通过 `~/.config/creator-studio/feishu.json` 或环境变量 `FEISHU_BASE_URL` / `FEISHU_SUBTABLE_URL` 覆盖为个人飞书表。
+
+### 7. 🚀 多平台校验、草稿分发与外置技能联动
+1. **口播精剪（推荐外置技能）**：原始口播素材可先经 `cangshu-koubo-wudongxiao`（9:16 竖屏去气口/呼吸推拉/章节进度条）或 `cangshu-koubo-motion-edit`（3:4 动效混剪）产出成片；
+2. **多平台打包校验与安全分发**：运行 `python3 scripts/distribute.py <工程目录> --platforms xiaohongshu,douyin,wechat_channels,youtube,bilibili,x --check-only` 先校验文案权重、标签与 `3:4 / 4:3 / 16:9 / 9:16` 封面比例；前置安装 `video-publisher` 与 `ego-browser` 并完成账号 onboarding 后，加 `--run --confirm-original-rights --sync-feishu` 即可统一推进到最终发布按钮前并自动把核对明细回写飞书。
+3. **⚠️ 封面视觉升级待优化事项（V2 Backlog）**：当前多比例封面仅在视频抽帧基础上做信息卡片叠加，人物主体分离、视觉层次与强点击钩子仍有较大提升空间，后续版本将继续专项打磨。
 
 ---
 

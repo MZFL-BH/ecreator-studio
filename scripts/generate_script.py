@@ -14,6 +14,7 @@ Creator Studio · 10分钟爆款脚本生成与抗压蒸馏引擎 (Generate Scri
 
 import os
 import sys
+import json
 import argparse
 from pathlib import Path
 from datetime import datetime
@@ -160,12 +161,20 @@ PUBLISH_TEMPLATE = """# 《{title}》多平台分发文案库
 ---
 
 ## 三、 抖音 / 视频号 (Douyin / Channels)
-- **形式机制**: 9:16 竖版高清 / 横屏中长视频（享受平台 90 天长效流量推荐扶持）。
+- **形式机制**: 9:16 竖版高清 / 横屏中长视频（享受平台 90 天长效流量推荐扶持）；封面同步准备 3:4 竖版与 4:3 横版。
 - **视频文案**:
 {douyin_content}
 #{topic_tag} #自媒体创业 #AI玩家 #干货分享 #深度实测
 
 - **评论区互动**: 引导在评论区留言【{cta_keyword}】触发自动私信或关键字回复。
+
+---
+
+## 四、 X (Twitter) Thread
+- **Tweet 1/2 (Hook + 视频)**:
+  {x_hook}
+- **Tweet 2/2 (拆解对照 + 结论)**:
+  {x_takeaway}
 """
 
 
@@ -222,7 +231,7 @@ def generate_package(output_dir: Path, topic: str, topic_type: str, target: str,
         cta_keyword=cta
     )
 
-    xhs_title = f"千万别直接交！4款AI实测：表面高大上，背地里全是坑！💥"
+    xhs_title = f"千万别直接交！4款AI实测翻车！💥"
     xhs_content = f"""网上一堆教你用 AI 做 {topic} 的神仙教程，吹得神乎其神。
 作为一个天天在工位实战的打工人，今天我动了真格：
 直接把虚构公司的标准业务模板 + 真实数据喂给 4 款顶流工具，提示词死磕“严禁编造”。
@@ -241,26 +250,63 @@ AI 负责加速，但终审权必须死死攥在自己手里！
 需要的同学在评论区扣【{cta}】自取！建议先【收藏】防走丢！"""
 
     bili_title = f"【硬核实测】把真实业务喂给 4 款顶流 AI，我发现了全员都在偷偷造假！"
+    douyin_title = f"4款AI实测翻车：别盲信一键生成"
     douyin_content = f"把真实业务喂给4款顶流AI，实测结果直接让我惊出一身冷汗！表面排版高大上，背地里居然全员在偷偷造假捏造数据！职场人千万别盲信AI一键生成，AI负责加速，终审权永远在自己手里！完整避坑核对单见评论区！"
+    topic_tag = topic.replace(" ", "")
+    x_hook = f"Stop blindly trusting 1-click AI outputs for {topic}. We fed real business templates into 4 top models—surface looked great, underneath all 4 hallucinated numbers. Thread below."
+    x_takeaway = f"Workflow rule: AI handles speed, human keeps the final audit. Never ship unverified numbers."
 
     publish_content = PUBLISH_TEMPLATE.format(
         title=title,
         xhs_title=xhs_title,
         xhs_content=xhs_content,
-        topic_tag=topic.replace(" ", ""),
+        topic_tag=topic_tag,
         cta_keyword=cta,
         bili_title=bili_title,
-        douyin_content=douyin_content
+        douyin_content=douyin_content,
+        x_hook=x_hook,
+        x_takeaway=x_takeaway,
     )
 
     script_path = output_dir / "script.md"
     publish_path = output_dir / "publish.md"
+    package_path = output_dir / "video_publisher_package.json"
+
+    covers_dir = output_dir / "covers"
+    package_payload = {
+        "title": douyin_title[:30],
+        "xhsTitle": xhs_title,
+        "douyinTitle": douyin_title[:30],
+        "bilibiliTitle": bili_title[:80],
+        "wechatTitle": douyin_title[:30],
+        "description": xhs_content,
+        "douyinDescription": douyin_content,
+        "bilibiliDescription": f"本期实测 {topic}：把真实业务喂给 4 款顶流工具后的真实交付对比与避坑 SOP。",
+        "wechatDescription": douyin_content,
+        "tags": [topic_tag, "AI工具", "自媒体干货", "效率神器", "职场避坑"],
+        "xhsTopics": [topic_tag, "AI工具", "自媒体干货", "效率神器", "职场避坑"],
+        "douyinTopics": [topic_tag, "AI工具", "效率神器", "职场避坑", "干货分享"],
+        "bilibiliTags": [topic_tag, "AI工具", "效率神器", "职场", "干货"],
+        "wechatTags": [topic_tag, "AI工具", "效率神器"],
+        "videoPath": str((output_dir / "delivery" / "final.mp4")),
+        "cover": {
+            "uploadCustomCover": False,
+            "vertical3x4Path": str(covers_dir / "cover_3x4.png"),
+            "horizontal4x3Path": str(covers_dir / "cover_4x3.png"),
+            "horizontal16x9Path": str(covers_dir / "cover_16x9.png"),
+        },
+        "xTwitter": {
+            "tweets": [x_hook, x_takeaway],
+        },
+    }
 
     script_path.write_text(script_content, encoding="utf-8")
     publish_path.write_text(publish_content, encoding="utf-8")
+    package_path.write_text(json.dumps(package_payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"[√] 爆款脚本已生成: {script_path}")
     print(f"[√] 多平台分发文案已生成: {publish_path}")
+    print(f"[√] video-publisher 分发包模板已生成: {package_path}")
     return script_path, publish_path
 
 

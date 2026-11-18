@@ -16,14 +16,15 @@ import argparse
 import subprocess
 from pathlib import Path
 
-SKILL_ROOT = Path("/Users/wangbinghao/.gemini/config/skills")
+THIS_DIR = Path(__file__).resolve().parent
+SKILL_ROOT = Path(os.environ.get("SKILL_ROOT") or (Path.home() / ".gemini" / "config" / "skills")).expanduser()
 FFMPEG_SKILL_DIR = SKILL_ROOT / "ffmpeg-skill" / "scripts"
 OIL_COVER_SCRIPT = SKILL_ROOT / "oil-cover" / "scripts" / "generate_oil_cover.py"
-FEISHU_SYNC_SCRIPT = SKILL_ROOT / "creator-studio" / "scripts" / "feishu_sync.py"
-RENDER_CARDS_SCRIPT = SKILL_ROOT / "creator-studio" / "scripts" / "render_cards.py"
-ASSEMBLE_SCRIPT = SKILL_ROOT / "creator-studio" / "scripts" / "assemble_video.py"
-REVIEW_SCRIPT = SKILL_ROOT / "creator-studio" / "scripts" / "review.py"
-GENERATE_SCRIPT = SKILL_ROOT / "creator-studio" / "scripts" / "generate_script.py"
+FEISHU_SYNC_SCRIPT = THIS_DIR / "feishu_sync.py"
+RENDER_CARDS_SCRIPT = THIS_DIR / "render_cards.py"
+ASSEMBLE_SCRIPT = THIS_DIR / "assemble_video.py"
+REVIEW_SCRIPT = THIS_DIR / "review.py"
+GENERATE_SCRIPT = THIS_DIR / "generate_script.py"
 
 
 def run_cmd(cmd, desc=""):

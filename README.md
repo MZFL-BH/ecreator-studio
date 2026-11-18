@@ -47,8 +47,9 @@ flowchart LR
 | [`scripts/render_cards.py`](./scripts/render_cards.py) | **高清动效卡片渲染引擎**：基于 Playwright 批量渲染 1080x1920 竖版红绿勾叉表、数字胶囊卡与代码高亮框 | ~30 秒 |
 | [`scripts/cut_silence.py`](./scripts/cut_silence.py) | **智能切除口播气口**：利用苹果 VideoToolbox 硬件加速，自动切除 0.6s 以上停顿气口，大幅提升前 5 秒留存 | ~10 秒 |
 | [`scripts/pipeline.py`](./scripts/pipeline.py) | **全自动流水线总控**：一键串联音频 `-14 LUFS` 广播级响度标准化、封面方案 8 候选帧截取与飞书多维表格入库 | ~20 秒 |
+| [`scripts/distribute.py`](./scripts/distribute.py) | **多平台打包校验与分发桥接器**：统筹校验 `video_publisher_package.json` 封面比例/标题标签、驱动 `video-publisher` 预填草稿，并联动飞书核对子表回写 | ~15 秒 |
 | [`scripts/review.py`](./scripts/review.py) | **数据体检与归因复盘引擎**：量化计算赞播比、赞藏比、转粉率，判定“中长横屏 90 天长效推荐池”，自动输出 🔴 P0 / 🟠 P1 / 🟡 P2 复盘报告 | ~3 秒 |
-| [`scripts/feishu_sync.py`](./scripts/feishu_sync.py) | **飞书多维表格云端同步器**：本地工程目录与飞书云端双向打通，随时随地手机查阅进度 | ~2 秒 |
+| [`scripts/feishu_sync.py`](./scripts/feishu_sync.py) | **飞书多维表格云端同步器**：支持同步主表与「分平台分发与数据明细」核对子表（`--sync-platforms`），内置配置文件与环境变量覆盖以方便跨账号复用 | ~5 秒 |
 | [`dashboard/index.html`](./dashboard/index.html) | **自媒体闭环运营作战大屏**：清爽亮色系交互看板，内置实时计算器与终端命令备忘 | 双击即开 |
 
 ---
@@ -98,11 +99,30 @@ python3 scripts/pipeline.py ./20261030-template-ppt
 - 自动生成 8 候选帧封面建议；
 - 自动入库飞书多维表格。
 
-#### 第三步：发后 48 小时数据体检复盘
+#### 第三步：多平台打包校验与草稿安全分发
+```bash
+# 1. 仅校验文案权重、标签与多比例封面 (3:4 / 4:3 / 16:9 / 9:16)
+python3 scripts/distribute.py ./20261030-template-ppt --platforms xiaohongshu,douyin,wechat_channels,youtube,bilibili,x --check-only
+
+# 2. 联动 video-publisher 上传草稿（默认停在最终发布按钮前）并同步飞书核对子表
+python3 scripts/distribute.py ./20261030-template-ppt --platforms xiaohongshu,douyin,wechat_channels,youtube --run --confirm-original-rights --sync-feishu
+```
+> 跨账号 / 外置技能前置配置说明：
+> - **飞书表格切换**：如他人复用，无需修改源码，可在 `~/.config/creator-studio/feishu.json`（或通过环境变量 `FEISHU_BASE_URL` / `FEISHU_SUBTABLE_URL` / `FEISHU_FIELD_IDS` / `FEISHU_SUBTABLE_FIELD_IDS`）配置自己的飞书多维表格与字段 ID；工作目录与 Skill 根目录也可通过 `CREATOR_STUDIO_WORKSPACE`、`SKILL_ROOT`、`VIDEO_PUBLISHER_DIR` 覆盖。
+> - **外置关联 Skill 依赖**：全流程中的精细口播剪辑依赖 `cangshu-koubo-wudongxiao` / `cangshu-koubo-motion-edit`，多平台浏览器自动填草稿依赖 `video-publisher` 与 `ego-browser`。
+
+#### 第四步：发后 48~72 小时数据体检复盘
 ```bash
 python3 scripts/review.py ./20261030-template-ppt --views 3500 --likes 180 --saves 120 --bounce2s 28.5 --retention5s 36.0
 ```
 - 自动输出 `review.md`，深度穿透是否存在前 2 秒跳出过高、中段完播塌方或赞藏比偏低问题，直接反哺下周周中写稿。
+
+---
+
+## 🛠️ 后续待精进清单 (V2 Roadmap)
+
+- **🎨 封面制作视觉升级（高优）**：当前封面设计仍处于「视频抽帧截图 + 信息卡片叠加」的 v1 阶段，后续需专门核实并精进人物抠像分离度、主视觉对比度、场景道具视觉隐喻与分平台爆款构图。
+- **📊 T+3 天分平台数据原行回写**：后续打通 `review.py` 按「选题 + 平台」直接回填「分平台分发与数据明细」子表的播放、点赞、收藏与前 5 秒留存指标。
 
 ---
 

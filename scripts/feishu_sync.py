@@ -18,12 +18,13 @@ import argparse
 import subprocess
 from pathlib import Path
 
-# 默认飞书多维表格配置
-FEISHU_BASE_URL = "https://my.feishu.cn/base/KWl2bUe9fa5CKvsctVjcSb59nVb?table=tblKLLxJdPltUSA5&view=vewgDwbRSG"
-DEFAULT_SPACE_NAME = "feishu-sync-space"
-DEFAULT_PROFILE_ID = "Profile 3"
+# 默认飞书多维表格配置（他人复用时可通过 ~/.config/creator-studio/feishu.json 或环境变量覆盖）
+_DEFAULT_FEISHU_BASE_URL = "https://my.feishu.cn/base/KWl2bUe9fa5CKvsctVjcSb59nVb?table=tblKLLxJdPltUSA5&view=vewgDwbRSG"
+_DEFAULT_FEISHU_SUBTABLE_URL = "https://my.feishu.cn/base/KWl2bUe9fa5CKvsctVjcSb59nVb?table=tblMSFUmoFx8YEX4&view=vewmaAjzhI"
+DEFAULT_SPACE_NAME = "creator-feishu-sync"
+DEFAULT_PROFILE_ID = os.environ.get("EGO_PROFILE_ID", "Profile 1")
 
-FIELD_IDS = {
+_DEFAULT_FIELD_IDS = {
     "title": "fldMBxOfhS",        # 选题标题 (Text)
     "status": "fldDnDxtyr",       # 流程状态 (Single Select)
     "ref_link": "fldorZE7Oc",     # 对标参考链接 (URL)
@@ -32,6 +33,55 @@ FIELD_IDS = {
     "assets": "fldXDDYDhM",       # 成片与文案 (Text)
     "platforms": "fldJoy3bbJ",    # 分发平台 (Multi Select)
     "views": "fldWqEuIEh"         # 全网播放数据 (Number)
+}
+
+_DEFAULT_SUBTABLE_FIELD_IDS = {
+    "topic": "fldnREQayU",          # 选题名称 (Text)
+    "platform": "fldVagiZla",       # 平台 (Single Select)
+    "status": "fld6ykUcuQ",         # 分发状态 (Single Select)
+    "schedule_time": "fldHarOhYF",  # 定时与发布时间 (Text)
+    "actual_title": "flduMEXEm1",   # 实际标题与短标题 (Text)
+    "check_details": "fldadDUNWz",  # 核对明细 (Text)
+    "space_or_link": "fldw7sdoZE",  # Ego空间与链接 (Text)
+    "views": "fld9n3dJgm",          # 播放量 (Number)
+    "likes": "fld9E93WiB",          # 点赞 (Number)
+    "saves": "fldmM7Futb",          # 收藏 (Number)
+    "comments": "fldFdKOfHR",       # 评论 (Number)
+    "bounce_2s": "fldKWW8aXM",      # 前2秒跳出率(%) (Number)
+    "retention_5s": "fldkiTWTQh",   # 5秒完播率(%) (Number)
+    "diagnosis": "fldq7oZUpb",      # 复盘诊断结论 (Text)
+}
+
+
+def _load_feishu_config():
+    """加载飞书多维表格配置，支持外部配置文件与环境变量覆盖以方便跨账号复用"""
+    cfg_path = Path(os.environ.get("CREATOR_STUDIO_FEISHU_CONFIG") or (Path.home() / ".config" / "creator-studio" / "feishu.json")).expanduser()
+    cfg = {}
+    if cfg_path.is_file():
+        try:
+            cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+        except Exception:
+            cfg = {}
+    base_url = os.environ.get("FEISHU_BASE_URL") or cfg.get("base_url") or _DEFAULT_FEISHU_BASE_URL
+    subtable_url = os.environ.get("FEISHU_SUBTABLE_URL") or cfg.get("subtable_url") or _DEFAULT_FEISHU_SUBTABLE_URL
+    field_ids = {**_DEFAULT_FIELD_IDS, **(cfg.get("field_ids") or {})}
+    if os.environ.get("FEISHU_FIELD_IDS"):
+        field_ids.update(json.loads(os.environ["FEISHU_FIELD_IDS"]))
+    subtable_field_ids = {**_DEFAULT_SUBTABLE_FIELD_IDS, **(cfg.get("subtable_field_ids") or {})}
+    if os.environ.get("FEISHU_SUBTABLE_FIELD_IDS"):
+        subtable_field_ids.update(json.loads(os.environ["FEISHU_SUBTABLE_FIELD_IDS"]))
+    return base_url, subtable_url, field_ids, subtable_field_ids
+
+
+FEISHU_BASE_URL, FEISHU_SUBTABLE_URL, FIELD_IDS, SUBTABLE_FIELD_IDS = _load_feishu_config()
+
+PLATFORM_DISPLAY_MAP = {
+    "xiaohongshu": "小红书",
+    "douyin": "抖音",
+    "wechat_channels": "微信视频号",
+    "youtube": "YouTube",
+    "bilibili": "B站",
+    "x": "X",
 }
 
 
@@ -58,9 +108,21 @@ def parse_project_dir(dir_path: Path) -> dict:
     voice_candidates = list(dir_path.glob("voiceover*.txt")) + list(dir_path.glob("*字幕*.md")) + list(dir_path.glob("*字幕*.txt"))
     voice_file = voice_candidates[0] if voice_candidates else None
 
-    # 4. 寻找视频产物
-    videos = list(dir_path.glob("*.mp4")) + list((dir_path / "delivery").glob("*.mp4") if (dir_path / "delivery").exists() else [])
-    video_names = [v.name for v in videos]
+    # 4. 寻找视频产物（兼容 delivery/、output/、cangshu 的 edit_* 目录）
+    videos = (
+        list(dir_path.glob("*.mp4"))
+        + (list((dir_path / "delivery").glob("*.mp4")) if (dir_path / "delivery").exists() else [])
+        + (list((dir_path / "output").glob("*.mp4")) if (dir_path / "output").exists() else [])
+        + [p for p in dir_path.glob("edit_*/*成片*.mp4")]
+        + [p for p in dir_path.glob("edit_*/cut.mp4")]
+    )
+    seen_v = set()
+    video_names = []
+    for v in videos:
+        rp = str(v.resolve())
+        if rp not in seen_v:
+            seen_v.add(rp)
+            video_names.append(v.name)
 
     # 没有脚本且没有视频的目录大概率不是视频工程
     if not script_file and not videos:
@@ -158,6 +220,8 @@ def parse_project_dir(dir_path: Path) -> dict:
 
 def sync_record_via_browser(record: dict) -> bool:
     """通过 ego-browser 调用已登录的飞书会话，将记录提交到多维表格"""
+    m = re.search(r"/base/([A-Za-z0-9]+)", FEISHU_BASE_URL)
+    base_token = m.group(1) if m else "KWl2bUe9fa5CKvsctVjcSb59nVb"
     node_script = f"""
 let task;
 try {{
@@ -175,7 +239,7 @@ const record = {json.dumps(record, ensure_ascii=False)};
 
 // 1. 确保在目标表格页面
 const currentUrl = await page.url();
-if (!currentUrl.includes("KWl2bUe9fa5CKvsctVjcSb59nVb")) {{
+if (!currentUrl.includes("{base_token}")) {{
     console.log("Navigating to Bitable...");
     await page.goto("{FEISHU_BASE_URL}", {{ waitUntil: "domcontentloaded", timeout: 30000 }});
     await page.waitForTimeout(4000);
@@ -283,18 +347,23 @@ await page.evaluate(() => {{
 }});
 await page.waitForTimeout(2500);
 
-// 关闭抽屉
+// 关闭抽屉并清理临时同步空间
 await page.evaluate(() => {{
     const closeBtn = document.querySelector('.bitable-card-modal-header-v2-btn-close');
     if (closeBtn) closeBtn.click();
 }});
-await page.waitForTimeout(1000);
+await page.waitForTimeout(800);
+await task.finish({{ keep: [] }});
 console.log("SUCCESS_SYNC_RECORD");
 """
 
     # 调用 ego-browser 运行该嵌入脚本
+    ego_bin = "ego-browser"
+    fallback_ego = Path.home() / ".local" / "bin" / "ego-browser"
+    if fallback_ego.exists():
+        ego_bin = str(fallback_ego)
     proc = subprocess.run(
-        ["ego-browser", "nodejs"],
+        [ego_bin, "nodejs"],
         input=node_script,
         text=True,
         capture_output=True
@@ -307,10 +376,253 @@ console.log("SUCCESS_SYNC_RECORD");
         return False
 
 
+def _load_latest_vp_states(package_path: Path) -> dict:
+    """读取 ~/.video-publisher/v2-jobs/*/state.json 中与当前分发包匹配的各平台最新核对状态"""
+    jobs_root = Path.home() / ".video-publisher" / "v2-jobs"
+    if not jobs_root.exists():
+        return {}
+    target_resolved = str(package_path.resolve())
+    merged = {}
+    candidates = []
+    for state_file in jobs_root.glob("*/state.json"):
+        try:
+            data = json.loads(state_file.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if str(Path(data.get("packagePath", "")).expanduser().resolve()) == target_resolved:
+            candidates.append((data.get("updatedAt", ""), data))
+    candidates.sort(key=lambda item: item[0])
+    for _, job in candidates:
+        for plat, pinfo in (job.get("platforms") or {}).items():
+            merged[plat] = pinfo
+    return merged
+
+
+def build_platform_preflight_records(dir_path: Path, topic_title: str) -> list[dict]:
+    """从 preflight_report.json 或 video_publisher_package.json + state.json 生成分平台核对明细行"""
+    dir_path = dir_path.resolve()
+    report_file = dir_path / "preflight_report.json"
+    if report_file.exists():
+        data = json.loads(report_file.read_text(encoding="utf-8"))
+        raw_records = data.get("records") or data.get("platforms") or []
+        out = []
+        for item in raw_records:
+            out.append({
+                "topic": item.get("topic") or topic_title,
+                "platform": item.get("platform", ""),
+                "status": item.get("status", "草稿已就绪"),
+                "schedule_time": item.get("schedule_time", ""),
+                "actual_title": item.get("actual_title", ""),
+                "check_details": item.get("check_details", ""),
+                "space_or_link": item.get("space_or_link", ""),
+            })
+        return [r for r in out if r["platform"]]
+
+    pkg_file = dir_path / "video_publisher_package.json"
+    if not pkg_file.exists():
+        return []
+    pkg = json.loads(pkg_file.read_text(encoding="utf-8"))
+    vp_states = _load_latest_vp_states(pkg_file)
+
+    title_map = {
+        "xiaohongshu": pkg.get("xhsTitle") or pkg.get("title", ""),
+        "douyin": pkg.get("douyinTitle") or pkg.get("title", ""),
+        "wechat_channels": pkg.get("wechatTitle") or pkg.get("title", ""),
+        "bilibili": pkg.get("bilibiliTitle") or pkg.get("title", ""),
+        "youtube": pkg.get("youtubeTitle") or pkg.get("title", ""),
+    }
+    records = []
+    for key in ("xiaohongshu", "douyin", "wechat_channels", "youtube", "bilibili"):
+        st = vp_states.get(key)
+        if not st and not title_map.get(key):
+            continue
+        ready = bool(st and st.get("ready"))
+        blocker_msg = (st or {}).get("verdict", {}).get("blocker", {})
+        if isinstance(blocker_msg, dict):
+            blocker_msg = blocker_msg.get("message", "")
+        status = "草稿已就绪" if ready else "卡点待处理"
+        details = "已通过 video-publisher 门禁核验" if ready else (blocker_msg or "待运行分发草稿管线")
+        space_id = (st or {}).get("taskSpaceId")
+        records.append({
+            "topic": topic_title,
+            "platform": PLATFORM_DISPLAY_MAP.get(key, key),
+            "status": status,
+            "schedule_time": "",
+            "actual_title": title_map.get(key, ""),
+            "check_details": details,
+            "space_or_link": f"Ego Space {space_id}" if space_id else "",
+        })
+
+    x_tweets = (pkg.get("xTwitter") or {}).get("tweets") or []
+    if x_tweets:
+        records.append({
+            "topic": topic_title,
+            "platform": "X",
+            "status": "草稿已就绪" if not vp_states else "卡点待处理",
+            "schedule_time": "",
+            "actual_title": x_tweets[0].splitlines()[0][:80],
+            "check_details": f"X 文案共 {len(x_tweets)} 条；视频与发帖弹窗按脚本或人工确认",
+            "space_or_link": "",
+        })
+    return records
+
+
+def sync_platform_records_via_browser(records: list[dict], screenshot_path: str = "") -> bool:
+    """将分平台核对明细批量写入飞书「分平台分发与数据明细」子表"""
+    if not records:
+        return True
+
+    space_name = f"{DEFAULT_SPACE_NAME}-sub"
+    fids = SUBTABLE_FIELD_IDS
+    node_script = f"""
+let task;
+try {{
+    task = await taskSpace("{space_name}", {{ profileId: "{DEFAULT_PROFILE_ID}" }});
+}} catch (e) {{
+    if (e.message && (e.message.includes("already exists") || e.message.includes("user"))) {{
+        task = await taskSpace("{space_name}-" + Date.now(), {{ profileId: "{DEFAULT_PROFILE_ID}" }});
+    }} else {{
+        throw e;
+    }}
+}}
+const page = task.page("p1");
+const records = {json.dumps(records, ensure_ascii=False)};
+
+console.log("Navigating to Feishu subtable...");
+await page.goto("{FEISHU_SUBTABLE_URL}", {{ waitUntil: "domcontentloaded", timeout: 30000 }});
+await page.waitForTimeout(4500);
+
+await page.evaluate(() => {{
+    const close = document.querySelector('.ud__modal-close, [class*="modal"] [class*="close"]');
+    if (close) close.click();
+    const closeCard = document.querySelector('.bitable-card-modal-header-v2-btn-close');
+    if (closeCard) closeCard.click();
+}});
+await page.waitForTimeout(500);
+
+async function fillTextField(fieldId, text) {{
+    if (!text) return;
+    const selector = `[data-field-id="${{fieldId}}"] [contenteditable="true"]`;
+    const exists = await page.evaluate((sel) => !!document.querySelector(sel), selector);
+    if (exists) {{
+        await page.click(selector);
+        await page.waitForTimeout(100);
+        await page.keyboard.press('Meta+A');
+        await page.keyboard.press('Backspace');
+        await page.keyboard.insertText(String(text));
+        await page.waitForTimeout(150);
+    }}
+}}
+
+async function selectSingleOption(fieldId, targetText) {{
+    if (!targetText) return;
+    const found = await page.evaluate(([fid, target]) => {{
+        const el = document.querySelector(`[data-field-id="${{fid}}"]`);
+        if (!el) return true;
+        const pills = Array.from(el.querySelectorAll('li.b-select-option'));
+        const matched = pills.find(p => p.innerText.trim() === target);
+        if (matched) {{
+            matched.click();
+            return true;
+        }}
+        return false;
+    }}, [fieldId, targetText]);
+    if (!found) {{
+        const focused = await page.evaluate((fid) => {{
+            const wrap = document.querySelector(`[data-field-id="${{fid}}"]`);
+            if (!wrap) return false;
+            const trigger = wrap.querySelector('.b-select-selector, .b-select, [class*="select"]');
+            if (trigger) trigger.click();
+            const inp = wrap.querySelector('input');
+            if (inp) {{
+                inp.focus();
+                return true;
+            }}
+            return false;
+        }}, fieldId);
+        if (focused) {{
+            await page.waitForTimeout(200);
+            await page.keyboard.insertText(String(targetText));
+            await page.waitForTimeout(350);
+            const clicked = await page.evaluate(([fid, target]) => {{
+                const el = document.querySelector(`[data-field-id="${{fid}}"]`);
+                const pills = Array.from(el?.querySelectorAll('li.b-select-option') || []);
+                const exact = pills.find(p => p.innerText.trim() === target);
+                if (exact) {{
+                    exact.click();
+                    return true;
+                }}
+                return false;
+            }}, [fieldId, targetText]);
+            if (!clicked) {{
+                await page.keyboard.press('Enter');
+            }}
+        }}
+    }}
+    await page.waitForTimeout(250);
+}}
+
+for (const rec of records) {{
+    await page.click('.bitable-add-record-toolbar-button__main');
+    await page.waitForTimeout(1200);
+
+    await fillTextField("{fids['topic']}", rec.topic);
+    await selectSingleOption("{fids['platform']}", rec.platform);
+    await selectSingleOption("{fids['status']}", rec.status);
+    await fillTextField("{fids['schedule_time']}", rec.schedule_time);
+    await fillTextField("{fids['actual_title']}", rec.actual_title);
+    await fillTextField("{fids['check_details']}", rec.check_details);
+    await fillTextField("{fids['space_or_link']}", rec.space_or_link);
+
+    await page.evaluate(() => {{
+        const card = document.querySelector('.bitable-card-modal-v2');
+        if (card) {{
+            const btn = Array.from(card.querySelectorAll('button')).find(b => b.innerText.trim() === '提交');
+            if (btn) btn.click();
+        }}
+    }});
+    await page.waitForTimeout(1800);
+
+    await page.evaluate(() => {{
+        const closeBtn = document.querySelector('.bitable-card-modal-header-v2-btn-close');
+        if (closeBtn) closeBtn.click();
+    }});
+    await page.waitForTimeout(500);
+    console.log("Synced platform row:", rec.platform);
+}}
+
+const shotPath = {json.dumps(screenshot_path)};
+if (shotPath) {{
+    await page.waitForTimeout(800);
+    await page.screenshot({{ path: shotPath }});
+}}
+await task.finish({{ keep: [] }});
+console.log("SUCCESS_SYNC_SUBTABLE");
+"""
+    ego_bin = "ego-browser"
+    fallback_ego = Path.home() / ".local" / "bin" / "ego-browser"
+    if fallback_ego.exists():
+        ego_bin = str(fallback_ego)
+    proc = subprocess.run(
+        [ego_bin, "nodejs"],
+        input=node_script,
+        text=True,
+        capture_output=True
+    )
+    output = (proc.stdout or "") + (proc.stderr or "")
+    if proc.returncode == 0 and "SUCCESS_SYNC_SUBTABLE" in output:
+        return True
+    print(f"[-] 子表同步失败: {output}")
+    return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="飞书多维表格自动化同步工具")
     parser.add_argument("target", nargs="?", default=".", help="待同步的选题工程目录路径（默认当前目录）")
     parser.add_argument("--scan", action="store_true", help="扫描目标目录下所有子工程批量同步")
+    parser.add_argument("--sync-platforms", action="store_true", help="同步分平台发前核对明细至「分平台分发与数据明细」子表")
+    parser.add_argument("--platforms-only", action="store_true", help="仅同步分平台子表，跳过主表新增（避免重复建行）")
+    parser.add_argument("--screenshot", default="", help="可选：子表写入完成后的截图保存路径")
     args = parser.parse_args()
 
     target_path = Path(args.target).resolve()
@@ -345,19 +657,31 @@ def main():
             print(f"[-] 目录 {target_path} 未识别到有效的脚本或视频产物。")
             sys.exit(1)
 
-        print(f"[*] 解析到自媒体工程信息:")
-        print(f"  - 选题标题:   {rec['title']}")
-        print(f"  - 流程状态:   {rec['status']}")
-        print(f"  - 核心痛点:   {rec['hook']}")
-        print(f"  - 交付清单:   {rec['assets']}")
-        print(f"  - 素材路径:   {rec['path']}")
-        print(f"  - 分发平台:   {', '.join(rec['platforms'])}")
-        print(f"\n[*] 正在同步至飞书...")
+        if not args.platforms_only:
+            print(f"[*] 解析到自媒体工程信息:")
+            print(f"  - 选题标题:   {rec['title']}")
+            print(f"  - 流程状态:   {rec['status']}")
+            print(f"  - 核心痛点:   {rec['hook']}")
+            print(f"  - 交付清单:   {rec['assets']}")
+            print(f"  - 素材路径:   {rec['path']}")
+            print(f"  - 分发平台:   {', '.join(rec['platforms'])}")
+            print(f"\n[*] 正在同步主表至飞书...")
 
-        if sync_record_via_browser(rec):
-            print(f"[√] 成功同步至飞书「AI自媒体自动化·选题与出片总表」！")
-        else:
-            print(f"[-] 同步失败，请检查浏览器会话状态。")
+            if sync_record_via_browser(rec):
+                print(f"[√] 成功同步至飞书「AI自媒体自动化·选题与出片总表」！")
+            else:
+                print(f"[-] 主表同步失败，请检查浏览器会话状态。")
+
+        if args.sync_platforms or args.platforms_only:
+            plat_records = build_platform_preflight_records(target_path, rec["title"])
+            if not plat_records:
+                print("[!] 未找到分平台核对记录或分发包。")
+            else:
+                print(f"\n[*] 正在同步 {len(plat_records)} 条分平台核对明细至飞书子表...")
+                if sync_platform_records_via_browser(plat_records, screenshot_path=args.screenshot):
+                    print(f"[√] 成功写入「分平台分发与数据明细」子表（共 {len(plat_records)} 条）！")
+                else:
+                    print("[-] 子表同步失败，请检查浏览器会话状态。")
 
 
 if __name__ == "__main__":

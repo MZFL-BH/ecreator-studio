@@ -45,11 +45,12 @@ import urllib.request
 from pathlib import Path
 from datetime import datetime
 
-SKILL_ROOT = Path("/Users/wangbinghao/.gemini/config/skills")
-GENERATE_SCRIPT = SKILL_ROOT / "creator-studio" / "scripts" / "generate_script.py"
-FEISHU_SYNC_SCRIPT = SKILL_ROOT / "creator-studio" / "scripts" / "feishu_sync.py"
-DESKTOP_DIR = Path.home() / "Desktop" / "素材"
-REPO_DIR = Path.home() / "Desktop" / "creator-studio"
+THIS_DIR = Path(__file__).resolve().parent
+SKILL_ROOT = Path(os.environ.get("SKILL_ROOT") or (Path.home() / ".gemini" / "config" / "skills")).expanduser()
+GENERATE_SCRIPT = THIS_DIR / "generate_script.py"
+FEISHU_SYNC_SCRIPT = THIS_DIR / "feishu_sync.py"
+DESKTOP_DIR = Path(os.environ.get("CREATOR_STUDIO_WORKSPACE") or (Path.home() / "Desktop" / "素材")).expanduser()
+REPO_DIR = Path(os.environ.get("CREATOR_STUDIO_REPO") or (Path.home() / "Desktop" / "creator-studio")).expanduser()
 CANDIDATES_FILE = DESKTOP_DIR / "candidates.md"
 
 
