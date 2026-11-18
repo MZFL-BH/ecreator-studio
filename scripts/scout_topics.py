@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Creator Studio · 选题雷达与 85 分打分引擎 (Topic Scout & Rubric Scorer)
+ECreator Studio · 选题雷达与 85 分打分引擎 (Topic Scout & Rubric Scorer)
 =====================================================================
 融合 cheat-on-content 核心评估体系 (7 维度 Rubric + candidate-schema 协议)
 与 6 年自媒体老兵经验，专为 Ethan 硬核技术实测赛道量身定制：
@@ -50,7 +50,11 @@ SKILL_ROOT = Path(os.environ.get("SKILL_ROOT") or (Path.home() / ".gemini" / "co
 GENERATE_SCRIPT = THIS_DIR / "generate_script.py"
 FEISHU_SYNC_SCRIPT = THIS_DIR / "feishu_sync.py"
 DESKTOP_DIR = Path(os.environ.get("CREATOR_STUDIO_WORKSPACE") or (Path.home() / "Desktop" / "素材")).expanduser()
-REPO_DIR = Path(os.environ.get("CREATOR_STUDIO_REPO") or (Path.home() / "Desktop" / "creator-studio")).expanduser()
+REPO_DIR = Path(
+    os.environ.get("ECREATOR_STUDIO_REPO")
+    or os.environ.get("CREATOR_STUDIO_REPO")
+    or (Path.home() / "Desktop" / "ecreator-studio")
+).expanduser()
 CANDIDATES_FILE = DESKTOP_DIR / "candidates.md"
 
 
@@ -393,7 +397,7 @@ def save_candidates_to_file(candidates: list, file_path: Path = CANDIDATES_FILE)
     if not file_path.exists():
         header = (
             "# 选题候选池 (Candidates Pool)\n\n"
-            "> 由 Creator Studio + cheat-on-content 自动化维护。\n"
+            "> 由 ECreator Studio + cheat-on-content 自动化维护。\n"
             "> 准入规则：S 级 (≥85分，直接立项出片) | A 级 (75-84分，储备观察) | 淘汰 (<75分)\n\n"
             "---\n\n"
         )
@@ -447,7 +451,7 @@ def recommend_topics(file_path: Path = CANDIDATES_FILE, top_n: int = 5, filter_t
     top_items = filtered[:top_n]
 
     print("\n" + "=" * 68)
-    print(f"🎯 Creator Studio · 候选池智能推荐 (Top {len(top_items)}，筛选: {filter_tier})")
+    print(f"🎯 ECreator Studio · 候选池智能推荐 (Top {len(top_items)}，筛选: {filter_tier})")
     print(f"数据源: {file_path} (池内总量: {len(entries)} 条)")
     print("=" * 68)
 
@@ -468,7 +472,7 @@ def recommend_topics(file_path: Path = CANDIDATES_FILE, top_n: int = 5, filter_t
 # --- 4. 主程序入口 ---
 
 def main():
-    parser = argparse.ArgumentParser(description="Creator Studio · 选题雷达与 cheat-on-content 85分评审引擎")
+    parser = argparse.ArgumentParser(description="ECreator Studio · 选题雷达与 cheat-on-content 85分评审引擎")
     parser.add_argument("topic", nargs="?", default="", help="手动评估的选题名称或竞品链接")
     parser.add_argument("--scan", action="store_true", help="并发抓取 GitHub、HackerNews、HuggingFace 全球 AI 情报")
     parser.add_argument("--limit", type=int, default=5, help="展示高潜选题数量 (默认 5)")

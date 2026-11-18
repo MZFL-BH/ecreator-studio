@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Video Assembly Tool for Creator Studio
+Video Assembly Tool for ECreator Studio
 --------------------------------------
 根据分镜清单或指定目录，将动效卡片视频与出镜占位片段快速缝合成一条完整的草稿样片。
 标准化输出 1080x1920 30fps H.264 视频。

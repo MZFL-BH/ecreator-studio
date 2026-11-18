@@ -1,8 +1,8 @@
-# Creator Studio · 个人自媒体全链路作战工作流
+# ECreator Studio · 个人自媒体全链路作战工作流
 
 <p align="center">
-  <strong>专为硬核技术人打造的个人自媒体自动化流水线</strong><br>
-  从选题生成、动效卡片渲染、音频标准化到发后数据体检的全流程工业化解决方案
+  <strong>专为硬核技术人打造的个人自媒体自动化流水线 · 作品主系列：E-Lab (Ethan 实测)</strong><br>
+  ECreator Studio 负责工业化生产调度，E-Lab 负责全平台（小红书 / 抖音 / 视频号 / YouTube / X / B站）内容输出
 </p>
 
 <p align="center">
@@ -20,7 +20,8 @@
 1. **陷入臃肿繁琐的自建泥潭**：自己写数据库、爬虫服务和后台管理，还没发两条视频就把时间耗尽在系统维护上；
 2. **陷入低质套壳的商业陷阱**：使用第三方商业套壳软件（美图/开拍/剪映模板），生产出雷同且充满“AI塑料感”的假人假稿，随时面临平台限流。
 
-**Creator Studio 的核心哲学**：
+**ECreator Studio × E-Lab 的核心哲学**：
+- **工具与内容双轮驱动**：开源工具链叫 `ECreator Studio`，全平台成片统一归属 `E-Lab` 系列（涵括 AI 硬核实测与反内耗结构思维两条主线）。
 - **拒绝玩具 Demo，死磕真实生产力**：以真实翻车实测作为护城河，击穿 AI 虚假营销。
 - **飞书为云端总脑，本地为执行中枢**：所有工程状态直接沉淀在飞书多维表格，本地敲一行命令自动咬合。
 - **严格适配技术人作息**：**周中 2 晚各 1 小时备料打磨，周末 3.5 小时集中出片，周一发后 15 分钟数据反哺**。
@@ -59,8 +60,8 @@ flowchart LR
 ### 1. 环境准备
 需要 Python 3.10+ 与 FFmpeg（支持硬件加速）：
 ```bash
-git clone https://github.com/MZFL-BH/creator-studio.git
-cd creator-studio
+git clone https://github.com/MZFL-BH/ecreator-studio.git
+cd ecreator-studio
 pip install -r requirements.txt
 playwright install chromium
 ```
@@ -108,7 +109,7 @@ python3 scripts/distribute.py ./20261030-template-ppt --platforms xiaohongshu,do
 python3 scripts/distribute.py ./20261030-template-ppt --platforms xiaohongshu,douyin,wechat_channels,youtube --run --confirm-original-rights --sync-feishu
 ```
 > 跨账号 / 外置技能前置配置说明：
-> - **飞书表格切换**：如他人复用，无需修改源码，可在 `~/.config/creator-studio/feishu.json`（或通过环境变量 `FEISHU_BASE_URL` / `FEISHU_SUBTABLE_URL` / `FEISHU_FIELD_IDS` / `FEISHU_SUBTABLE_FIELD_IDS`）配置自己的飞书多维表格与字段 ID；工作目录与 Skill 根目录也可通过 `CREATOR_STUDIO_WORKSPACE`、`SKILL_ROOT`、`VIDEO_PUBLISHER_DIR` 覆盖。
+> - **飞书表格切换**：如他人复用，无需修改源码，可在 `~/.config/ecreator-studio/feishu.json`（或通过环境变量 `FEISHU_BASE_URL` / `FEISHU_SUBTABLE_URL` / `FEISHU_FIELD_IDS` / `FEISHU_SUBTABLE_FIELD_IDS`）配置自己的飞书多维表格与字段 ID；工作目录与 Skill 根目录也可通过 `CREATOR_STUDIO_WORKSPACE`、`SKILL_ROOT`、`VIDEO_PUBLISHER_DIR` 覆盖。
 > - **外置关联 Skill 依赖**：全流程中的精细口播剪辑依赖 `cangshu-koubo-wudongxiao` / `cangshu-koubo-motion-edit`，多平台浏览器自动填草稿依赖 `video-publisher` 与 `ego-browser`。
 
 #### 第四步：发后 48~72 小时数据体检复盘

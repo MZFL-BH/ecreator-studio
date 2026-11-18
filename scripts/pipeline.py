@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Creator Studio · 全自动自媒体出片流水线总控 (Pipeline Master)
+ECreator Studio · 全自动自媒体出片流水线总控 (Pipeline Master)
 ===========================================================
 将 ffmpeg-skill、oil-cover、feishu_sync 与本地卡片引擎无缝串联：
 1. [音频/粗剪] 调用 ffmpeg-skill 自动剔除气口停顿、LUFS 响度平衡(-14dB)

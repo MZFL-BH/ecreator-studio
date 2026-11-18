@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Creator Studio · 极客音视频抓取与转写引擎 (Rip & Transcribe Engine)
+ECreator Studio · 极客音视频抓取与转写引擎 (Rip & Transcribe Engine)
 ===================================================================
 深度融合三大生产力神器：yt-dlp + OpenAI Whisper + FFmpeg
 解决自媒体两大痛点：
@@ -210,7 +210,7 @@ def analyze_transcript(full_text: str, duration_sec: float = 0.0) -> dict:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Creator Studio · 极客音视频抓取与 Whisper 转写打轴引擎")
+    parser = argparse.ArgumentParser(description="ECreator Studio · 极客音视频抓取与 Whisper 转写打轴引擎")
     parser.add_argument("target", help="网络视频链接 (B站/抖音/YouTube) 或 本地音视频文件路径")
     parser.add_argument("-o", "--output-dir", default="", help="产物输出目录 (默认当前目录或同级输出)")
     parser.add_argument("--model", default="base", choices=["tiny", "base", "small", "medium", "turbo"], help="Whisper 模型规格 (默认 base，兼顾速度与准确度)")
@@ -230,7 +230,7 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     print("\n" + "=" * 68)
-    print(f"🎬 Creator Studio · 音视频扒取与打轴工作流")
+    print(f"🎬 ECreator Studio · 音视频扒取与打轴工作流")
     print(f"• yt-dlp:  {YTDLP_BIN or '未找到'}")
     print(f"• Whisper: {WHISPER_BIN or '未找到'}")
     print(f"• FFmpeg:  {FFMPEG_BIN or '未找到'}")

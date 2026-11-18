@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Creator Studio · 多平台分发编排桥接脚本 (distribute.py)
+ECreator Studio · 多平台分发编排桥接脚本 (distribute.py)
 =======================================================
 整合 `video-publisher`（基于 ego-browser 的草稿安全分发管线）与 `feishu_sync.py`：
 1. 调用 `check-package.mjs` 按平台逐一校验视频、封面比例（3:4 / 4:3 / 16:9）、标题权重与话题标签；
@@ -102,7 +102,7 @@ def check_onboarding(node: str) -> tuple[bool, dict]:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Creator Studio 多平台分发桥接工具")
+    parser = argparse.ArgumentParser(description="ECreator Studio 多平台分发桥接工具")
     parser.add_argument("target", help="工程目录或 video_publisher_package.json 路径")
     parser.add_argument("--platforms", default="xiaohongshu,douyin,bilibili", help="逗号分隔平台列表，如 xiaohongshu,douyin,bilibili,x")
     parser.add_argument("--task-suffix", default="", help="本次分发的 taskSpace 后缀")

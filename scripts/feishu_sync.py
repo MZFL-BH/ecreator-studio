@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Feishu Bitable Sync Tool for Creator Studio
+Feishu Bitable Sync Tool for ECreator Studio
 -------------------------------------------
 自动解析本地自媒体选题工程目录，将标题、分镜状态、核心痛点、产物清单与素材路径
 一键无缝同步至飞书多维表格「AI自媒体自动化·选题与出片总表」。
@@ -18,7 +18,7 @@ import argparse
 import subprocess
 from pathlib import Path
 
-# 默认飞书多维表格配置（他人复用时可通过 ~/.config/creator-studio/feishu.json 或环境变量覆盖）
+# 默认飞书多维表格配置（他人复用时可通过 ~/.config/ecreator-studio/feishu.json 或环境变量覆盖）
 _DEFAULT_FEISHU_BASE_URL = "https://my.feishu.cn/base/KWl2bUe9fa5CKvsctVjcSb59nVb?table=tblKLLxJdPltUSA5&view=vewgDwbRSG"
 _DEFAULT_FEISHU_SUBTABLE_URL = "https://my.feishu.cn/base/KWl2bUe9fa5CKvsctVjcSb59nVb?table=tblMSFUmoFx8YEX4&view=vewmaAjzhI"
 DEFAULT_SPACE_NAME = "creator-feishu-sync"
@@ -55,9 +55,15 @@ _DEFAULT_SUBTABLE_FIELD_IDS = {
 
 def _load_feishu_config():
     """加载飞书多维表格配置，支持外部配置文件与环境变量覆盖以方便跨账号复用"""
-    cfg_path = Path(os.environ.get("CREATOR_STUDIO_FEISHU_CONFIG") or (Path.home() / ".config" / "creator-studio" / "feishu.json")).expanduser()
+    env_cfg = os.environ.get("ECREATOR_STUDIO_FEISHU_CONFIG") or os.environ.get("CREATOR_STUDIO_FEISHU_CONFIG")
+    candidates = [
+        Path(env_cfg).expanduser() if env_cfg else None,
+        Path.home() / ".config" / "ecreator-studio" / "feishu.json",
+        Path.home() / ".config" / "creator-studio" / "feishu.json",
+    ]
+    cfg_path = next((p for p in candidates if p and p.is_file()), None)
     cfg = {}
-    if cfg_path.is_file():
+    if cfg_path:
         try:
             cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
         except Exception:

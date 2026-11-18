@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Universal Card Rendering Engine for Creator Studio
+Universal Card Rendering Engine for ECreator Studio
 --------------------------------------------------
 通用科技评测/对比视频动效卡片渲染器。
 支持大字金句卡、多工具横评对比卡、步骤清单卡、翻车实录卡等预设版式。

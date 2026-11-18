@@ -1,6 +1,6 @@
 # 选题候选池 (Candidates Pool)
 
-> 由 Creator Studio + cheat-on-content 自动化维护。
+> 由 ECreator Studio + cheat-on-content 自动化维护。
 > 准入规则：S 级 (≥85分，直接立项出片) | A 级 (75-84分，储备观察) | 淘汰 (<75分)
 
 ---

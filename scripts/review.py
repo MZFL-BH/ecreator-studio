@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Creator Studio · 视频作品复盘与数据体检脚本 (review.py)
+ECreator Studio · 视频作品复盘与数据体检脚本 (review.py)
 
 功能：
 1. 自动定位工程目录，读取分镜脚本 (script.md) 与发布文案 (publish.md) 的元数据与制作耗时；

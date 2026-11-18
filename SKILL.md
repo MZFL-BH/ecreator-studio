@@ -1,12 +1,12 @@
 ---
-name: creator-studio
+name: ecreator-studio
 description: >-
-  全流程自媒体创作者工作流（Creator Studio）。当用户提到自媒体、短视频创作、选题调研、脚本分镜打磨、视频粗剪/字幕、多平台分发或数据复盘时使用。该技能内置交互式下拉执行门禁，支持全流程各环节的快速代操与执行。
+  全流程自媒体创作者工作流（ECreator Studio，适配全平台作品系列 E-Lab / Ethan 实测）。当用户提到自媒体、短视频创作、选题调研、脚本分镜打磨、视频粗剪/字幕、多平台分发或数据复盘时使用。该技能内置交互式下拉执行门禁，支持全流程各环节的快速代操与执行。
 ---
 
-# Creator Studio · 自媒体全链路作战工作流
+# ECreator Studio · 自媒体全链路作战工作流（系列：E-Lab）
 
-本技能为自媒体（短视频、图文、长视频）全生命周期提供体系化支持。涵盖从灵感选题到发布复盘的完整链路，支持交互式选择与全自动动手代操。
+本技能为 **Ethan（全平台主系列：`E-Lab` / Ethan 实测）** 及开源自媒体创作者提供全生命周期生产支持。涵盖从灵感选题到发布复盘的完整链路，支持交互式选择与全自动动手代操。
 
 ---
 
@@ -18,7 +18,7 @@ description: >-
 {
   "questions": [
     {
-      "question": "请从下方选择你要执行的 Creator Studio 作战动作：",
+      "question": "请从下方选择你要执行的 ECreator Studio 作战动作：",
       "options": [
         "(Recommended) 🎯 选题雷达与85分团队打分 (scout_topics.py: 扫描GitHub/HN/HF情报并裁决)",
         "⚡️ 阿杜模式·60fps代码动效与真人小窗混剪 (adu_motion.py: 60fps动效/字级高亮/真人小窗交接)",
@@ -94,7 +94,7 @@ description: >-
 运行 `feishu_sync.py <工程目录> [--sync-platforms]`：
 - 秒级同步本地工程状态、分镜完成度、核心痛点与产物清单至飞书多维表格「AI自媒体自动化·选题与出片总表」；
 - 带 `--sync-platforms` 时，自动读取 `preflight_report.json` 或 `~/.video-publisher/v2-jobs/*/state.json`，把各平台实际标题、定时时间、封面与卡点明细写入「分平台分发与数据明细」子表。
-- 跨账号复用：支持通过 `~/.config/creator-studio/feishu.json` 或环境变量 `FEISHU_BASE_URL` / `FEISHU_SUBTABLE_URL` 覆盖为个人飞书表。
+- 跨账号复用：支持通过 `~/.config/ecreator-studio/feishu.json`（兼容 `~/.config/creator-studio/feishu.json`）或环境变量 `FEISHU_BASE_URL` / `FEISHU_SUBTABLE_URL` 覆盖为个人飞书表。
 
 ### 7. 🚀 多平台校验、草稿分发与外置技能联动
 1. **口播精剪（推荐外置技能）**：原始口播素材可先经 `cangshu-koubo-wudongxiao`（9:16 竖屏去气口/呼吸推拉/章节进度条）或 `cangshu-koubo-motion-edit`（3:4 动效混剪）产出成片；
