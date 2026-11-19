@@ -37,6 +37,7 @@ env/
 *.mp4
 *.mov
 *.wav
+!templates/adu_motion/sfx/*.wav
 *.m4a
 *.tar.gz
 *.zip

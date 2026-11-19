@@ -44,9 +44,14 @@ def process_project(dir_path: Path, skip_audio: bool = False, skip_cover: bool =
     print(f"🎬 启动流水线作业: {dir_path.name}")
     print(f"=======================================================")
 
-    # 1. 寻找核心视频文件
-    videos = list(dir_path.glob("*.mp4")) + list((dir_path / "delivery").glob("*.mp4") if (dir_path / "delivery").exists() else [])
-    # 优先找 final 或 draft
+    steps_ran = 0
+
+    # 1. 寻找核心视频文件（兼容根目录与 delivery/、output/）
+    videos = (
+        list(dir_path.glob("*.mp4"))
+        + (list((dir_path / "delivery").glob("*.mp4")) if (dir_path / "delivery").exists() else [])
+        + (list((dir_path / "output").glob("*.mp4")) if (dir_path / "output").exists() else [])
+    )
     main_video = None
     for v in sorted(videos, key=lambda x: x.stat().st_mtime, reverse=True):
         if not v.name.endswith("_tight.mp4") and not v.name.endswith("_loudnorm.mp4"):
@@ -54,63 +59,74 @@ def process_project(dir_path: Path, skip_audio: bool = False, skip_cover: bool =
             break
 
     # 2. [环节一：音频与剪辑优化 (ffmpeg-skill)]
-    if not skip_audio and main_video and FFMPEG_SKILL_DIR.exists():
-        # A. 响度归一化 (LUFS -14dB)
-        norm_video = main_video.with_name(f"{main_video.stem}_loudnorm.mp4")
-        if not norm_video.exists():
-            cmd = [
-                sys.executable, str(FFMPEG_SKILL_DIR / "loudness.py"),
-                str(main_video), "-o", str(norm_video), "--overwrite"
-            ]
-            if run_cmd(cmd, f"执行音频标准化 (-14 LUFS 响度对齐) -> {main_video.name}"):
-                print(f"[√] 音频响度优化完成: {norm_video.name}")
+    if not skip_audio and main_video:
+        if not FFMPEG_SKILL_DIR.exists():
+            print(f"[!] 未检测到外置 ffmpeg-skill ({FFMPEG_SKILL_DIR})，跳过自动响度与去静音步骤。")
         else:
-            print(f"[i] 已存在标准化音频版本: {norm_video.name}")
-
-        # B. 寻找原始口播音频或出镜视频做静音气口切除
-        raw_clips = list(dir_path.glob("raw_*.mp4")) + list(dir_path.glob("*talking_head*.mp4"))
-        for raw in raw_clips:
-            tight_clip = raw.with_name(f"{raw.stem}_tight.mp4")
-            if not tight_clip.exists():
+            norm_video = main_video.with_name(f"{main_video.stem}_loudnorm.mp4")
+            if not norm_video.exists():
                 cmd = [
-                    sys.executable, str(FFMPEG_SKILL_DIR / "silence.py"),
-                    str(raw), "-o", str(tight_clip), "--threshold", "-35", "--min-silence", "0.6", "--hw"
+                    sys.executable, str(FFMPEG_SKILL_DIR / "loudness.py"),
+                    str(main_video), "-o", str(norm_video), "--overwrite"
                 ]
-                if run_cmd(cmd, f"智能切除停顿气口 -> {raw.name}"):
-                    print(f"[√] 口播去静音完成: {tight_clip.name}")
+                if run_cmd(cmd, f"执行音频标准化 (-14 LUFS 响度对齐) -> {main_video.name}"):
+                    print(f"[√] 音频响度优化完成: {norm_video.name}")
+                    steps_ran += 1
+            else:
+                print(f"[i] 已存在标准化音频版本: {norm_video.name}")
+                steps_ran += 1
 
-    # 3. [环节二：智能封面选帧与方案规划 (oil-cover)]
+            raw_clips = list(dir_path.glob("raw_*.mp4")) + list(dir_path.glob("*talking_head*.mp4"))
+            for raw in raw_clips:
+                tight_clip = raw.with_name(f"{raw.stem}_tight.mp4")
+                if not tight_clip.exists():
+                    cmd = [
+                        sys.executable, str(FFMPEG_SKILL_DIR / "silence.py"),
+                        str(raw), "-o", str(tight_clip), "--threshold", "-35", "--min-silence", "0.6", "--hw"
+                    ]
+                    if run_cmd(cmd, f"智能切除停顿气口 -> {raw.name}"):
+                        print(f"[√] 口播去静音完成: {tight_clip.name}")
+                        steps_ran += 1
+
+    # 3. [环节二：智能封面选帧 (oil-cover)]
     target_video = main_video
-    if not skip_cover and target_video and OIL_COVER_SCRIPT.exists():
-        cover_out_dir = dir_path / f"{target_video.stem}.oil-cover"
-        # 提取标题
-        title = dir_path.name
-        script_file = next(dir_path.glob("*脚本*.md"), None) or next(dir_path.glob("*script*.md"), None)
-        if script_file:
-            try:
-                for line in script_file.read_text(encoding="utf-8").splitlines():
-                    if line.startswith("# "):
-                        title = line[2:].strip()
-                        break
-            except Exception:
-                pass
+    if not skip_cover and target_video:
+        if not OIL_COVER_SCRIPT.exists():
+            print(f"[!] 未检测到外置 oil-cover 技能 ({OIL_COVER_SCRIPT})，跳过封面候选帧截取。")
+        else:
+            cover_out_dir = dir_path / f"{target_video.stem}.oil-cover"
+            title = dir_path.name
+            script_file = next(dir_path.glob("*脚本*.md"), None) or next(dir_path.glob("*script*.md"), None)
+            if script_file:
+                try:
+                    for line in script_file.read_text(encoding="utf-8").splitlines():
+                        if line.startswith("# "):
+                            title = line[2:].strip()
+                            break
+                except Exception:
+                    pass
 
-        cmd = [
-            sys.executable, str(OIL_COVER_SCRIPT),
-            "--video", str(target_video),
-            "--title", title,
-            "--dry-run"
-        ]
-        if run_cmd(cmd, f"调用 oil-cover 从视频截取关键帧与生成封面方案 ({target_video.name})"):
-            print(f"[√] 封面候选帧与排版已就绪: {cover_out_dir.name}/ (包含 3:4 与 4:3 方案)")
+            cmd = [
+                sys.executable, str(OIL_COVER_SCRIPT),
+                "--video", str(target_video),
+                "--title", title,
+                "--skip-generate",
+            ]
+            if run_cmd(cmd, f"调用 oil-cover 从视频截取关键帧 ({target_video.name})"):
+                print(f"[√] 封面候选帧已截取: {cover_out_dir.name}/")
+                steps_ran += 1
 
     # 4. [环节三：同步飞书多维表格 (feishu_sync)]
     if not skip_sync and FEISHU_SYNC_SCRIPT.exists():
         cmd = [sys.executable, str(FEISHU_SYNC_SCRIPT), str(dir_path)]
         if run_cmd(cmd, "同步物料资产与进度至飞书多维表格"):
             print(f"[√] 飞书多维表格同步成功！")
+            steps_ran += 1
 
-    print(f"\n[🎉] 流水线执行完毕！工程目录: {dir_path}\n")
+    if steps_ran == 0:
+        print(f"\n[!] 警告：未执行任何有效流水线步骤，请检查视频文件及外置依赖技能是否就位。工程目录: {dir_path}\n")
+    else:
+        print(f"\n[🎉] 流水线执行完毕（共完成 {steps_ran} 项作业）！工程目录: {dir_path}\n")
 
 
 def main():

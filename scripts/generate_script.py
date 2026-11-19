@@ -26,7 +26,7 @@ SCRIPT_TEMPLATE = """# {title} · E-Lab 3分钟硬核实测脚本 v1
 ## 出镜 ① F01 · 0:00–0:12 · 12s 【黄金3秒·前三秒给狠话】
 Kicker overlay: {hook_kicker}
 【口播台词】: {hook_voiceover}
-【视觉画面】: 【中景切特写】Ethan 眼神锁定镜头，身体微前倾，右手拿手机或指向工位屏幕。
+【视觉画面】: 【中景切特写】{author} 眼神锁定镜头，身体微前倾，右手拿手机或指向工位屏幕。
 【状态语感】: 【嘴角微扬，自信坚定】把镜头当工位旁边的同事聊天，绝不用客套废话，开门第1秒直接扔出反常识狠话。
 
 ## C01 · RULE · 5s 【规则交代·拒绝玩具】
@@ -68,7 +68,7 @@ Kicker overlay: {hook_kicker}
 ## 出镜 ② F02 · 1:15–1:27 · 12s 【二段钩子·揭秘深水区】
 Kicker: DANGER
 【口播台词】: {f02_voiceover}
-【视觉画面】: 【近景特写】Ethan 神情由轻松转为严肃警示，身体微微前倾。
+【视觉画面】: 【近景特写】{author} 神情由轻松转为严肃警示，身体微微前倾。
 【状态语感】: 【神情收紧，语速从容下沉】重音加力，直接戳中观众对“背锅/翻车”的生存恐惧。
 
 ## C07 · ILLUSION · 6s 【数据陷阱·情绪共鸣】
@@ -109,12 +109,12 @@ Kicker: DANGER
 
 ## 出镜 ③ F03 · 2:45–3:00 · 15s 【CTA 与 90 天长效收藏引导】
 Kicker: CTA
-【口播台词】: 我是 Ethan / 用 AI 解决**真实生产力问题**，公开实验 / 这期包含完整的对比清单与提示词，建议先【**收藏**】备查，避免后续踩坑找不到 / 评论区扣「{cta_keyword}」，原件直接打包带走！
-【视觉画面】: 【中景切近景】Ethan 恢复【微笑亲和】，双手做抱拳或互动引导手势。
+【口播台词】: 我是 {author} / 用 AI 解决**真实生产力问题**，公开实验 / 这期包含完整的对比清单与提示词，建议先【**收藏**】备查，避免后续踩坑找不到 / 评论区扣「{cta_keyword}」，原件直接打包带走！
+【视觉画面】: 【中景切近景】{author} 恢复【微笑亲和】，双手做抱拳或互动引导手势。
 【状态语感】: 【嘴角上扬，真诚互动】给予观众极高确定感与利他价值，激活 >60% 高赞藏比。
 
 ## C13 · FOLLOW · 3s
-标题: **Ethan** · 硬核技术实测
+标题: **{author}** · 硬核技术实测
 【视觉画面】: 关注卡片（头像 + 公开实验 / 真实职场）
 【口播台词】: （片尾音效，字幕：关注不迷路）
 
@@ -178,9 +178,18 @@ PUBLISH_TEMPLATE = """# 《{title}》多平台分发文案库
 """
 
 
-def generate_package(output_dir: Path, topic: str, topic_type: str, target: str, evidence: str, cta: str = "原件"):
+def generate_package(
+    output_dir: Path,
+    topic: str,
+    topic_type: str,
+    target: str,
+    evidence: str,
+    cta: str = "原件",
+    author: str = "",
+):
     output_dir = output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
+    author = (author or os.environ.get("ECREATOR_STUDIO_AUTHOR") or "Creator").strip()
 
     title = f"{topic}横向深度测评" if "测评" not in topic else topic
     hook_kicker = "HOOK"
@@ -195,24 +204,25 @@ def generate_package(output_dir: Path, topic: str, topic_type: str, target: str,
         scorecard_title = "老办法寸步难行，**新工具降维打击**"
         scorecard_voiceover = f"实测下来极其颠覆 / 传统的重劳力环节 / 已经全部可以被 AI Agent 无缝接管！"
     else:  # benchmark
-        hook_voiceover = f"如果你还在用网上教的 AI 做 {topic} / 我劝你**立刻停手**！/ 没人看花哨 Demo，大家只要**真实交付** / 今天把真实场景喂给顶流工具 / 结果测出一身冷汗：表面排版高大上，背地里居然**全员在偷偷造假**！"
+        hook_voiceover = f"如果你还在用网上教的 AI 做 {topic} / 我劝你**立刻停手**！/ 没人看花哨 Demo，大家只要**真实交付** / 今天把真实场景喂给顶流工具 / 结果测出一身冷汗：{evidence}！"
         scorecard_title = "只有 1 个勉强合格，**0 个敢直接交**"
         scorecard_voiceover = f"实测结果非常戏剧性 / 真正能符合标准的寥寥无几 / **0 个敢不经审核直接交给领导**！"
 
     scene_voiceover = f"我准备了一套严格的真实业务测试集 / 包含了标准格式、严格规范和边界条件"
     data_title = "7 项核心指标**死磕原样**"
     data_voiceover = f"明确要求**原样输出**、**严禁私自篡改** / 看看在严格要求下，谁会原型毕露！"
-    competitor_voiceover = f"同样的测试集和提示词 / 丢给行业主流工具和头部模型同台受阅"
+    competitor_voiceover = f"围绕「{target}」的测试集和提示词 / 丢给行业主流工具和头部模型同台受阅"
     tool1_title = "头部工具 A：**坦承能力边界**"
     tool1_voiceover = f"第一位表现很诚实 / 明确告知当前环境的局限，不打诳语"
     tool2_title = "头部工具 B：**赛博形式主义**"
     tool2_voiceover = f"第二位看着热闹 / 导出一看全是用文字硬凑的假模版，纯属糊弄！"
     f02_voiceover = f"看到这你以为结束了？/ 真正让我冒冷汗的 / 是接下来深入核对核心细节时发现的**致命陷阱**！"
-    illusion_voiceover = f"主流大模型 / 居然全部在**私自捏造数据和指标** / 没给的信息它也敢张口就来！"
+    illusion_voiceover = f"对照实测证据「{evidence}」/ 没给的信息它也敢张口就来！"
     kit_voiceover = f"本次评测的完整提示词、测试集与翻车原件 / 我都已经整理打包完毕"
 
     script_content = SCRIPT_TEMPLATE.format(
         title=title,
+        author=author,
         hook_kicker=hook_kicker,
         hook_voiceover=hook_voiceover,
         scene_voiceover=scene_voiceover,
@@ -240,7 +250,7 @@ def generate_package(output_dir: Path, topic: str, topic_type: str, target: str,
 ❌ 有的说做不到，老老实实当大纲战神；
 ❌ 有的强制绑架只能选自带模板；
 ❌ 有的导出后把核心标识搞成纯文字占位；
-❌ 最可怕的是全员在偷偷捏造业务数据！
+❌ 最可怕的是：{evidence}！
 
 ⚠️ 职场生存第一定律：
 排版不好挨顿批，数据造假背大锅！
@@ -249,11 +259,11 @@ AI 负责加速，但终审权必须死死攥在自己手里！
 🎁 本期实测的所有测试集、提示词核对单和勾叉总表都整理好了。
 需要的同学在评论区扣【{cta}】自取！建议先【收藏】防走丢！"""
 
-    bili_title = f"【硬核实测】把真实业务喂给 4 款顶流 AI，我发现了全员都在偷偷造假！"
+    bili_title = f"【硬核实测】把真实业务喂给 4 款顶流 AI，我发现了{evidence}！"[:80]
     douyin_title = f"4款AI实测翻车：别盲信一键生成"
-    douyin_content = f"把真实业务喂给4款顶流AI，实测结果直接让我惊出一身冷汗！表面排版高大上，背地里居然全员在偷偷造假捏造数据！职场人千万别盲信AI一键生成，AI负责加速，终审权永远在自己手里！完整避坑核对单见评论区！"
+    douyin_content = f"把真实业务喂给4款顶流AI，实测结果直接让我惊出一身冷汗！表面排版高大上，背地里居然{evidence}！职场人千万别盲信AI一键生成，AI负责加速，终审权永远在自己手里！完整避坑核对单见评论区！"
     topic_tag = topic.replace(" ", "")
-    x_hook = f"Stop blindly trusting 1-click AI outputs for {topic}. We fed real business templates into 4 top models—surface looked great, underneath all 4 hallucinated numbers. Thread below."
+    x_hook = f"Stop blindly trusting 1-click AI outputs for {topic}. We fed real business templates into 4 top models—surface looked great, underneath all 4 showed issues ({evidence}). Thread below."
     x_takeaway = f"Workflow rule: AI handles speed, human keeps the final audit. Never ship unverified numbers."
 
     publish_content = PUBLISH_TEMPLATE.format(
@@ -273,21 +283,30 @@ AI 负责加速，但终审权必须死死攥在自己手里！
     package_path = output_dir / "video_publisher_package.json"
 
     covers_dir = output_dir / "covers"
+    youtube_desc = (
+        f"本期实测《{topic}》：围绕「{target}」用真实业务规范测试主流 AI 工具，核心发现：{evidence}。\n\n"
+        f"{x_hook}\n{x_takeaway}"
+    )
     package_payload = {
         "title": douyin_title[:30],
         "xhsTitle": xhs_title,
         "douyinTitle": douyin_title[:30],
         "bilibiliTitle": bili_title[:80],
         "wechatTitle": douyin_title[:30],
+        "youtubeTitle": f"{topic} Benchmark | E-Lab Test"[:100],
         "description": xhs_content,
         "douyinDescription": douyin_content,
         "bilibiliDescription": f"本期实测 {topic}：把真实业务喂给 4 款顶流工具后的真实交付对比与避坑 SOP。",
         "wechatDescription": douyin_content,
+        "youtubeDescription": youtube_desc,
         "tags": [topic_tag, "AI工具", "自媒体干货", "效率神器", "职场避坑"],
         "xhsTopics": [topic_tag, "AI工具", "自媒体干货", "效率神器", "职场避坑"],
         "douyinTopics": [topic_tag, "AI工具", "效率神器", "职场避坑", "干货分享"],
         "bilibiliTags": [topic_tag, "AI工具", "效率神器", "职场", "干货"],
         "wechatTags": [topic_tag, "AI工具", "效率神器"],
+        "youtubeTags": [topic_tag, "AI", "Workflow", "E-Lab"],
+        "youtubeAudience": "not_made_for_kids",
+        "youtubeVisibility": "private",
         "videoPath": str((output_dir / "delivery" / "final.mp4")),
         "cover": {
             "uploadCustomCover": False,
@@ -318,10 +337,11 @@ def main():
     parser.add_argument("-c", "--competitor", default="低粉爆款对标", help="对标痛点或竞品")
     parser.add_argument("-e", "--evidence", default="真实数据造假", help="实测冲突证据")
     parser.add_argument("--cta", default="PPT", help="评论区互动领取关键词")
+    parser.add_argument("--author", default="", help="出镜作者名（默认读取 ECREATOR_STUDIO_AUTHOR 或 Creator）")
     args = parser.parse_args()
 
     out_dir = Path(args.output_dir)
-    generate_package(out_dir, args.topic, args.type, args.competitor, args.evidence, args.cta)
+    generate_package(out_dir, args.topic, args.type, args.competitor, args.evidence, args.cta, args.author)
 
 
 if __name__ == "__main__":

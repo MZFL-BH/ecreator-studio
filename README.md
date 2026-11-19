@@ -8,7 +8,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white" alt="Python 3.10+">
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT">
-  <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey" alt="Platform">
+  <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Linux-lightgrey" alt="Platform">
   <img src="https://img.shields.io/badge/Skill-Antigravity%20Ready-6366f1" alt="Skill Ready">
 </p>
 
@@ -32,10 +32,10 @@
 
 ```mermaid
 flowchart LR
-    A["周中: generate_script.py<br/>(10分钟出抗压脚本)"] --> B["周中: render_cards.py<br/>(批量渲染1080x1920动效卡)"]
-    B --> C["周末: silence.py<br/>(苹果硬件加速去气口)"]
-    C --> D["周末: pipeline.py<br/>(-14 LUFS 响度 + 封面规划)"]
-    D --> E["周末: feishu_sync.py<br/>(云端多维表格入库)"]
+    A["周中: generate_script.py<br/>(10分钟出抗压脚本)"] --> B["周中: render_cards.py<br/>(Pillow生成1080x1920卡片)"]
+    B --> C["周末: cut_silence.py<br/>(FFmpeg去静音停顿)"]
+    C --> D["周末: pipeline.py<br/>(响度对齐+选帧+飞书同步)"]
+    D --> E["周末: distribute.py<br/>(多平台打包校验与草稿分发)"]
     E --> F["发后: review.py<br/>(赞播比 / 赞藏比 / P0体检)"]
     F -.->|SOP 反哺下一期| A
 ```
@@ -44,10 +44,10 @@ flowchart LR
 | :--- | :--- | :--- |
 | [`scripts/scout_topics.py`](./scripts/scout_topics.py) | **选题雷达与 85 分 Rubric 评审引擎**：基于 `cheat-on-content` 体系升级 7 维度打分（ER/HP/QL/NA/AB/SR/SAT），扫描 GitHub/HN/HF 实时情报，对齐 `candidate-schema` 协议维护 `candidates.md` 候选池，支持 `--recommend` 智能推荐与 `>=85分` S 级立项 | ~3 秒 |
 | [`scripts/transcribe.py`](./scripts/transcribe.py) | **极客音视频抓取与 Whisper 打轴引擎**：整合 `yt-dlp` + `OpenAI Whisper` + `FFmpeg`，秒级扒取 B站/抖音/油管对标视频转写提炼，或为本地口播视频自动生成毫秒级 `.srt` 字幕 | ~5 秒 |
-| [`scripts/generate_script.py`](./scripts/generate_script.py) | **10分钟爆款脚本生成引擎**：支持三大赛道（硬核测评 / 省时间 / 加速老赛道），自动生成黄金3秒狠话、短句重音标点、画中画运镜指令及小红书/B站/抖音多平台发布文案 | ~5 秒 |
-| [`scripts/render_cards.py`](./scripts/render_cards.py) | **高清动效卡片渲染引擎**：基于 Playwright 批量渲染 1080x1920 竖版红绿勾叉表、数字胶囊卡与代码高亮框 | ~30 秒 |
-| [`scripts/cut_silence.py`](./scripts/cut_silence.py) | **智能切除口播气口**：利用苹果 VideoToolbox 硬件加速，自动切除 0.6s 以上停顿气口，大幅提升前 5 秒留存 | ~10 秒 |
-| [`scripts/pipeline.py`](./scripts/pipeline.py) | **全自动流水线总控**：一键串联音频 `-14 LUFS` 广播级响度标准化、封面方案 8 候选帧截取与飞书多维表格入库 | ~20 秒 |
+| [`scripts/generate_script.py`](./scripts/generate_script.py) | **10分钟爆款脚本生成引擎**：支持三大赛道（硬核测评 / 省时间 / 加速老赛道），自动生成黄金3秒狠话、短句重音标点、画中画运镜指令及小红书/B站/抖音/YouTube/X 分发包模板 | ~5 秒 |
+| [`scripts/render_cards.py`](./scripts/render_cards.py) | **高清对比卡片渲染引擎**：基于 Pillow 渲染 1080x1920 竖版金句卡与对比勾叉表，支持直接导出 FFmpeg MP4 片段 | ~5 秒 |
+| [`scripts/cut_silence.py`](./scripts/cut_silence.py) | **智能切除口播气口**：基于 FFmpeg `silencedetect` 自动扫描并切除停顿气口，提升前 5 秒留存 | ~10 秒 |
+| [`scripts/pipeline.py`](./scripts/pipeline.py) | **流水线联动控制**：若本机安装外置 `ffmpeg-skill` / `oil-cover`，可串联 `-14 LUFS` 响度标准化、候选帧截取与飞书同步 | ~20 秒 |
 | [`scripts/distribute.py`](./scripts/distribute.py) | **多平台打包校验与分发桥接器**：统筹校验 `video_publisher_package.json` 封面比例/标题标签、驱动 `video-publisher` 预填草稿，并联动飞书核对子表回写 | ~15 秒 |
 | [`scripts/review.py`](./scripts/review.py) | **数据体检与归因复盘引擎**：量化计算赞播比、赞藏比、转粉率，判定“中长横屏 90 天长效推荐池”，自动输出 🔴 P0 / 🟠 P1 / 🟡 P2 复盘报告 | ~3 秒 |
 | [`scripts/feishu_sync.py`](./scripts/feishu_sync.py) | **飞书多维表格云端同步器**：支持同步主表与「分平台分发与数据明细」核对子表（`--sync-platforms`），内置配置文件与环境变量覆盖以方便跨账号复用 | ~5 秒 |
@@ -58,13 +58,13 @@ flowchart LR
 ## 🚀 快速上手 (Quick Start)
 
 ### 1. 环境准备
-需要 Python 3.10+ 与 FFmpeg（支持硬件加速）：
+推荐 **macOS (Apple Silicon)** 或 **Linux**，需提前安装 Python 3.10+ 与 `ffmpeg`（macOS 可执行 `brew install ffmpeg`）：
 ```bash
 git clone https://github.com/MZFL-BH/ecreator-studio.git
 cd ecreator-studio
 pip install -r requirements.txt
-playwright install chromium
 ```
+> 若要启用浏览自动化与精细剪辑，还需按需安装外部 Skill / CLI：`ego-browser`（飞书与网页发布驱动）、`video-publisher`（多平台自动填表校验），以及可选的 `ffmpeg-skill`、`oil-cover`、`cangshu-koubo-wudongxiao`。
 
 ### 2. 标准出片工作流
 

@@ -1,3 +1,10 @@
-playwright>=1.40.0
-numpy>=1.20.0
-requests>=2.28.0
+# ECreator Studio Python Dependencies
+# Install with: pip install -r requirements.txt
+# System / external CLI tools required for specific pipelines:
+# - ffmpeg (audio/video processing, macOS: brew install ffmpeg)
+# - ego-browser + video-publisher skill (for multi-platform browser draft automation)
+
+Pillow>=10.0.0
+edge-tts>=6.1.0
+openai-whisper>=20231117
+yt-dlp>=2024.1.0
