@@ -80,9 +80,13 @@ description: >-
 运行 `render_cards.py --type hook --title "<主标题>" --subtitle "<副标题>" --output <输出路径.png> [--duration 5]`：
 - 基于 Pillow 渲染 `1080x1920` 竖版金句卡或对比卡（`--type comparison`），传入 `--duration > 0` 时可顺带导出 FFmpeg MP4 片段。
 
-### 6. ✂️ 智能切除口播气口
+### 6. ✂️ 智能切除口播气口与实时章节进度条
 运行 `cut_silence.py --input <输入视频.mp4> --output <输出视频.mp4> --noise -30dB --duration 0.4`：
 - 基于 FFmpeg `silencedetect` 自动扫描并切除超过指定时长的静音/思考停顿片段。
+
+运行 `chapter_bar.py --input <视频.mp4> --output <带进度条成片.mp4> --from-md <publish.md 或 script.md> [--srt <字幕.srt>]`：
+- 自动提取 `00:00 章节短标题` 生成底部实时高亮分段章节进度条（已播/当前段白底蓝线平滑推进，未播段深炭磨砂底）；
+- 传入 `--srt` 时同步烧录硬字幕，并自动将字幕上抬避让进度条区域。
 
 ### 7. 📊 发后数据体检与复盘
 运行 `review.py <工程目录> --views <播放量> --likes <点赞> --saves <收藏> --bounce2s <跳出率> --retention5s <完播率> --notes "<观察备注>"`：
