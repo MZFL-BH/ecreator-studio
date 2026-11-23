@@ -33,7 +33,7 @@
 ```mermaid
 flowchart LR
     A["周中: generate_script.py<br/>(10分钟出抗压脚本)"] --> B["周中: render_cards.py<br/>(Pillow生成1080x1920卡片)"]
-    B --> C["周末: cut_silence.py<br/>(FFmpeg去静音停顿)"]
+    B --> C["周末: cut_silence.py / chapter_bar.py<br/>(去静音 + 底部实时章节进度条)"]
     C --> D["周末: pipeline.py<br/>(响度对齐+选帧+飞书同步)"]
     D --> E["周末: distribute.py<br/>(多平台打包校验与草稿分发)"]
     E --> F["发后: review.py<br/>(赞播比 / 赞藏比 / P0体检)"]
@@ -47,6 +47,7 @@ flowchart LR
 | [`scripts/generate_script.py`](./scripts/generate_script.py) | **10分钟爆款脚本生成引擎**：支持三大赛道（硬核测评 / 省时间 / 加速老赛道），自动生成黄金3秒狠话、短句重音标点、画中画运镜指令及小红书/B站/抖音/YouTube/X 分发包模板 | ~5 秒 |
 | [`scripts/render_cards.py`](./scripts/render_cards.py) | **高清对比卡片渲染引擎**：基于 Pillow 渲染 1080x1920 竖版金句卡与对比勾叉表，支持直接导出 FFmpeg MP4 片段 | ~5 秒 |
 | [`scripts/cut_silence.py`](./scripts/cut_silence.py) | **智能切除口播气口**：基于 FFmpeg `silencedetect` 自动扫描并切除停顿气口，提升前 5 秒留存 | ~10 秒 |
+| [`scripts/chapter_bar.py`](./scripts/chapter_bar.py) | **底部实时章节进度条与字幕避让引擎**：支持 `--from-md` / `--chapters` 解析时间轴，Pillow 渲染动态进度胶囊并用 FFmpeg 一次性合成进度条 + 上移避让后的 `.srt` 硬字幕 | ~15 秒 |
 | [`scripts/pipeline.py`](./scripts/pipeline.py) | **流水线联动控制**：若本机安装外置 `ffmpeg-skill` / `oil-cover`，可串联 `-14 LUFS` 响度标准化、候选帧截取与飞书同步 | ~20 秒 |
 | [`scripts/distribute.py`](./scripts/distribute.py) | **多平台打包校验与分发桥接器**：统筹校验 `video_publisher_package.json` 封面比例/标题标签、驱动 `video-publisher` 预填草稿，并联动飞书核对子表回写 | ~15 秒 |
 | [`scripts/review.py`](./scripts/review.py) | **数据体检与归因复盘引擎**：量化计算赞播比、赞藏比、转粉率，判定“中长横屏 90 天长效推荐池”，自动输出 🔴 P0 / 🟠 P1 / 🟡 P2 复盘报告 | ~3 秒 |
@@ -95,6 +96,13 @@ python3 scripts/generate_script.py "公司PPT母版丢给4个AI" -t benchmark -c
 录完出镜和录屏后，丢入工程目录并执行总控流水线：
 ```bash
 python3 scripts/pipeline.py ./20261030-template-ppt
+
+# （可选）合成底部实时章节进度条，并自动上移避让 .srt 硬字幕
+python3 scripts/chapter_bar.py \
+  --input ./20261030-template-ppt/temp_cut.mp4 \
+  --output ./20261030-template-ppt/output/final.mp4 \
+  --from-md ./20261030-template-ppt/publish.md \
+  --srt ./20261030-template-ppt/clean.srt
 ```
 - 自动完成 `-14 LUFS` 广播级音频对齐；
 - 自动生成 8 候选帧封面建议；
