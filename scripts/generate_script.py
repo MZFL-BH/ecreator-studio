@@ -20,8 +20,19 @@ from pathlib import Path
 from datetime import datetime
 
 
-SCRIPT_TEMPLATE = """# {title} · E-Lab 3分钟硬核实测脚本 v1
+SCRIPT_TEMPLATE = """# {title} · E-Lab 实测脚本 v1
 > 系列归属：E-Lab（Ethan 实测） | 口播台词用 `/` 分隔气口；`**加粗**` 为口播**重音强调**；【视觉】标注画中画与智能运镜；【状态】标注面部肌肉与语感。
+
+## 开拍纯净镜头 & 发前 2 分钟盲测验收单 (Pre-Release Gate · 写脚本时定死)
+- **唯一核心爽点（只让观众带走这 1 件事）**：围绕「{title}」证明 `{evidence}`，给出一眼可抄的操作开关或避坑判断。
+- **开拍必录纯净画面（严禁录进书签栏 / 地址栏 / 提词导播网页）**：
+  1. `[Before]` 痛点现场实机画面（3~5 秒，纯软件/终端局部裁剪）
+  2. `[After]` 切换开关/跑通后的前后对比结果（5~8 秒，纯软件画面）
+- **发前 2 分钟盲测放行红线（`distribute.py` 前抽前 15s 字幕 + `0s/3s/15s/45s` 帧逐条打勾）**：
+  - [ ] 第 0~5 秒无“哈喽大家好/今天讲一下”寒暄废话，首句直接亮出对象与核心冲突/结果
+  - [ ] 成片画面洁净无穿帮（无 `file://` 本地路径、无杂乱书签栏、未拿提词网页当正片）
+  - [ ] 前 60 秒内真实出现过上述 `[Before] -> [After]` 实机切换证据
+  - [ ] 成片密度紧凑（建议控制在 `90s–180s`，口播精炼无大段废词注水）
 
 ## 出镜 ① F01 · 0:00–0:12 · 12s 【黄金3秒·前三秒给狠话】
 Kicker overlay: {hook_kicker}
@@ -222,6 +233,7 @@ def generate_package(
 
     script_content = SCRIPT_TEMPLATE.format(
         title=title,
+        evidence=evidence,
         author=author,
         hook_kicker=hook_kicker,
         hook_voiceover=hook_voiceover,
