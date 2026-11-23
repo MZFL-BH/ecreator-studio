@@ -101,7 +101,9 @@ description: >-
 ### 9. 🚀 多平台校验、草稿分发与外置技能联动
 1. **口播精剪（外置可选技能）**：原始口播素材可先经 `cangshu-koubo-wudongxiao` / `cangshu-koubo-motion-edit` 产出成片；
 2. **多平台打包校验与安全分发**：成片与封面就位后，运行 `python3 scripts/distribute.py <工程目录> --platforms xiaohongshu,douyin,wechat_channels,youtube,bilibili,x --check-only` 校验文案、视频与多比例封面；前置安装 `video-publisher` 与 `ego-browser` 并完成账号 onboarding 后，加 `--run --confirm-original-rights --sync-feishu` 即可统一推进到最终发布按钮前并自动把核对明细回写飞书。
-3. **⚠️ 封面视觉升级待优化事项（V2 Backlog）**：当前多比例封面仅在视频抽帧基础上做信息卡片叠加，人物主体分离、视觉层次与强点击钩子仍有较大提升空间，后续版本将继续专项打磨。
+3. **🎨 封面复用实验清单（下期视频 2 选 1 固化）**：已确立首版 `E-Lab` 视觉基线（浅奶油/雾蓝网格底 + 顶部独立品牌锁标 + `4+4` 主标题/高对比实心胶囊 + 右侧 8° 轻透视裁切证据窗 + 代码确定性合成 `ethan-cutout.png` 三画幅）。为消除此前 `agent-native` 三轮生图（Base/Refined/Brand Boost 9 次调用）的 Token 与配额消耗，**下期新视频优先做一次二选一实测并定型默认方案**：
+   - **方案 A（零 API 本地模板流）**：用 `ecreator-studio` HTML/CSS 无头渲染模板 + `ethan-cutout.png` 直出 `3:4`/`4:3`/`16:9`，零生图费用、中文锐度最高，优先用于录屏界面本身干净的实操期数；
+   - **方案 B（单轮直出 AI 重绘流）**：固化已验证过关的三画幅 Prompt 骨架走 `oil-cover` 单轮直出（必要时叠 HTML 品牌补丁），跳过多轮试错，仅在原始界面极杂乱需 AI 概括重绘时启用。
 
 ---
 
